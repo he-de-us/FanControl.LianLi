@@ -1,8 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using FanControl.Plugins;
 
 namespace FanControl.LianLiPlugin
@@ -34,16 +30,22 @@ namespace FanControl.LianLiPlugin
 
         public void Set(float val)
         {
-            if(_val != val)
+            // Always forward: the device layer decides when to actually write (on change,
+            // after a failed write, after reconnect, or as a periodic keep-alive).
+            // Never throw here - an exception makes FanControl mark the channel as failed ("?").
+            try
             {
-                _devices.FanControllers_SetSpeed(_controllerIndex, _channelIndex, (int)val);
-                _val = val;
+                _devices.FanControllers_SetSpeed(_controllerIndex, _channelIndex, val);
             }
+            catch
+            {
+            }
+            _val = val;
         }
 
         public void Reset()
         {
-           
+
         }
 
     }
@@ -74,7 +76,18 @@ namespace FanControl.LianLiPlugin
             + " _Channel_"
             + _channelIndex.ToString();
 
-        public void Update() => Value = _devices.FanControllers_GetSpeed(_controllerIndex, _channelIndex);
+        public void Update()
+        {
+            try
+            {
+                var speed = _devices.FanControllers_GetSpeed(_controllerIndex, _channelIndex);
+                if (speed.HasValue) { Value = speed; }
+            }
+            catch
+            {
+                // Keep the last value; a thrown exception stops the whole plugin in FanControl.
+            }
+        }
 
     }
 }

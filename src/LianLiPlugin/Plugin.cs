@@ -15,7 +15,9 @@ namespace FanControl.LianLiPlugin
         public void Close()
         {
             // Close all Lian Li Devices
-            _devices.Dispose();
+            _devices?.Dispose();
+            _devices = null;
+            _initialized = false;
         }
 
         public void Initialize()
